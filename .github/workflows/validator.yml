@@ -1,8 +1,9 @@
 name: ISC Data Validator
+
 on:
+  workflow_dispatch:
   repository_dispatch:
     types: [update_mining_data]
-    workflow_dispatch:
 
 jobs:
   update-ledger:
@@ -11,18 +12,54 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Process Mining Data
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Create Database Folder if not exists
+        run: mkdir -p database
+
+      - name: Process Mining Data & Update JSON
+        shell: python
         run: |
-          # Di sini nanti kita masukkan logika matematika koin:
-          # Rumus: 1 MB = 1 ISC
-          echo "Memproses data dari user: ${{ github.event.client_payload.user_address }}"
-          # (Logika update JSON akan kita buat di langkah berikutnya)
+          import json
+          import os
+
+          file_path = 'database/balances.json'
           
-      - name: Commit Updated Balances
+          # Cek jika file belum ada, buat awal
+          if not os.path.exists(file_path):
+              initial_data = {"network_stats": {"total_data_shared_gb": 0, "total_coins_minted": 0}, "users": []}
+              with open(file_path, 'w') as f:
+                  json.dump(initial_data, f)
+
+          with open(file_path, 'r') as f:
+              data = json.load(f)
+
+          # Data simulasi jika dijalankan manual
+          user_address = "0xAdminTest"
+          mb_shared = 10.0
+          
+          # Logika update
+          user_found = False
+          for user in data['users']:
+              if user['address'] == user_address:
+                  user['mb_shared'] += mb_shared
+                  user['isc_balance'] += mb_shared
+                  user_found = True
+                  break
+          
+          if not user_found:
+              data['users'].append({"address": user_address, "mb_shared": mb_shared, "isc_balance": mb_shared, "last_sync": "2026-02-23"})
+
+          with open(file_path, 'w') as f:
+              json.dump(data, f, indent=2)
+
+      - name: Commit & Push Changes
         run: |
-          git config --global user.name "ISC-Bot"
-          git config --global user.email "bot@isc.network"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add database/balances.json
-          git commit -m "Update balance for ${{ github.event.client_payload.user_address }}"
+          git commit -m "Manual Test: Update Balance" || echo "No changes to commit"
           git push
- 
