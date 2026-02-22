@@ -22,12 +22,25 @@ jobs:
 
       - name: Process Mining Data & Update JSON
         shell: python
+        env:
+          # Ini kunci agar robot bisa membaca paket dari aplikasi HP Anda
+          PAYLOAD_ADDRESS: ${{ github.event.client_payload.user_address }}
+          PAYLOAD_AMOUNT: ${{ github.event.client_payload.mb_shared }}
         run: |
           import json
           import os
+          import datetime
 
           file_path = 'database/balances.json'
           
+          # Baca dompet dari HP, kalau kosong (tes manual) pakai 0xAdminTest
+          user_address = os.environ.get('PAYLOAD_ADDRESS') or '0xAdminTest'
+          
+          try:
+              mb_shared = float(os.environ.get('PAYLOAD_AMOUNT') or 10.0)
+          except ValueError:
+              mb_shared = 10.0
+
           # Cek jika file belum ada, buat awal
           if not os.path.exists(file_path):
               initial_data = {"network_stats": {"total_data_shared_gb": 0, "total_coins_minted": 0}, "users": []}
@@ -37,21 +50,23 @@ jobs:
           with open(file_path, 'r') as f:
               data = json.load(f)
 
-          # Data simulasi jika dijalankan manual
-          user_address = "0xAdminTest"
-          mb_shared = 10.0
-          
-          # Logika update
+          # Logika update dompet
           user_found = False
           for user in data['users']:
               if user['address'] == user_address:
                   user['mb_shared'] += mb_shared
                   user['isc_balance'] += mb_shared
+                  user['last_sync'] = str(datetime.date.today())
                   user_found = True
                   break
           
           if not user_found:
-              data['users'].append({"address": user_address, "mb_shared": mb_shared, "isc_balance": mb_shared, "last_sync": "2026-02-23"})
+              data['users'].append({
+                  "address": user_address, 
+                  "mb_shared": mb_shared, 
+                  "isc_balance": mb_shared, 
+                  "last_sync": str(datetime.date.today())
+              })
 
           with open(file_path, 'w') as f:
               json.dump(data, f, indent=2)
@@ -61,5 +76,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add database/balances.json
-          git commit -m "Manual Test: Update Balance" || echo "No changes to commit"
+          git commit -m "Auto-Update Balance from App" || echo "No changes to commit"
           git push
