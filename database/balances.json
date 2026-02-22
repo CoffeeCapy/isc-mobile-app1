@@ -6,8 +6,8 @@
   "users": [
     {
       "address": "0xAdminTest",
-      "mb_shared": 110.0,
-      "isc_balance": 110.0,
+      "mb_shared": 120.0,
+      "isc_balance": 120.0,
       "last_sync": "2026-02-23"
     }
   ]
