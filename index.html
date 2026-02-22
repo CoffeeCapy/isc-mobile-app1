@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>ISC Network Explorer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background-color: #161b22;
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 1px solid #30363d;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 { margin: 0; color: #58a6ff; font-size: 28px; }
+        .container {
+            max-width: 800px;
+            width: 90%;
+            margin: 40px auto;
+        }
+        .stats-card {
+            background: linear-gradient(145deg, #1f242c, #161b22);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+        .stats-card h2 { margin-top: 0; color: #8b949e; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;}
+        .total-coins { font-size: 48px; font-weight: bold; color: #3fb950; margin: 10px 0; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #161b22;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #30363d;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #30363d;
+        }
+        th { background-color: #21262d; color: #8b949e; font-weight: 600; }
+        tr:hover { background-color: #1f242c; }
+        .address { font-family: monospace; color: #a5d6ff; }
+        .balance { font-weight: bold; color: #3fb950; }
+        
+        .footer { margin-top: 50px; text-align: center; color: #8b949e; font-size: 12px; padding-bottom: 20px;}
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🌐 ISC Network Explorer</h1>
+    </header>
+
+    <div class="container">
+        <div class="stats-card">
+            <h2>Total ISC Tertambang Secara Global</h2>
+            <div class="total-coins" id="totalMinted">Loading...</div>
+            <p style="color: #8b949e; font-size: 14px;">Data diperbarui secara real-time dari Ledger GitHub</p>
+        </div>
+
+        <h3 style="color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 10px;">🏆 Leaderboard Penambang</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Dompet / Wallet</th>
+                    <th>Data Dibagikan</th>
+                    <th>Saldo ISC</th>
+                    <th>Terakhir Aktif</th>
+                </tr>
+            </thead>
+            <tbody id="minerList">
+                <tr><td colspan="4" style="text-align: center;">Mencari data dari blockchain...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 ISC Network. All rights reserved.
+    </div>
+
+    <script>
+        // Mengambil data langsung dari file raw di GitHub Anda
+        // Tambahkan timestamp acak di akhir URL agar browser tidak menggunakan cache lama
+        const dbUrl = 'https://raw.githubusercontent.com/CoffeeCapy/isc-mobile-app1/main/database/balances.json?t=' + new Date().getTime();
+
+        async function fetchLedgerData() {
+            try {
+                const response = await fetch(dbUrl);
+                const data = await response.json();
+                
+                let totalCoins = 0;
+                let tableHtml = '';
+
+                // Urutkan user dari koin terbanyak ke paling sedikit
+                const sortedUsers = data.users.sort((a, b) => b.isc_balance - a.isc_balance);
+
+                sortedUsers.forEach(user => {
+                    totalCoins += user.isc_balance;
+                    
+                    // Format alamat dompet agar tidak terlalu panjang (opsional)
+                    const shortAddress = user.address.substring(0, 6) + '...' + user.address.substring(user.address.length - 4);
+
+                    tableHtml += `
+                        <tr>
+                            <td class="address">${user.address}</td>
+                            <td>${user.mb_shared} MB</td>
+                            <td class="balance">${user.isc_balance} ISC</td>
+                            <td style="color: #8b949e; font-size: 12px;">${user.last_sync}</td>
+                        </tr>
+                    `;
+                });
+
+                // Update tampilan
+                document.getElementById('totalMinted').innerText = totalCoins.toLocaleString() + ' ISC';
+                document.getElementById('minerList').innerHTML = tableHtml || '<tr><td colspan="4" style="text-align: center;">Belum ada penambang.</td></tr>';
+
+            } catch (error) {
+                console.error("Gagal mengambil data:", error);
+                document.getElementById('totalMinted').innerText = 'Error';
+                document.getElementById('minerList').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #ff4444;">Gagal terhubung ke jaringan database.</td></tr>';
+            }
+        }
+
+        // Panggil fungsi saat halaman dimuat
+        fetchLedgerData();
+    </script>
+</body>
+</html>
