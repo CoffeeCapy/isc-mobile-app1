@@ -72,7 +72,7 @@
         <div class="stats-card">
             <h2>Total ISC Tertambang Secara Global</h2>
             <div class="total-coins" id="totalMinted">Loading...</div>
-            <p style="color: #8b949e; font-size: 14px;">Data diperbarui secara real-time dari Ledger GitHub</p>
+            <p style="color: #8b949e; font-size: 14px;">Data diperbarui secara super-instan dari Node Utama</p>
         </div>
 
         <h3 style="color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 10px;">🏆 Leaderboard Penambang</h3>
@@ -96,13 +96,19 @@
     </div>
 
     <script>
-        // Mengambil data langsung dari file raw di GitHub Anda
-        // Tambahkan timestamp acak di akhir URL agar browser tidak menggunakan cache lama
-        const dbUrl = 'https://raw.githubusercontent.com/CoffeeCapy/isc-mobile-app1/main/database/balances.json?t=' + new Date().getTime();
+        // Menggunakan Jalur API VIP GitHub agar tidak kena Cache
+        const apiUrl = 'https://api.github.com/repos/CoffeeCapy/isc-mobile-app1/contents/database/balances.json';
 
         async function fetchLedgerData() {
             try {
-                const response = await fetch(dbUrl);
+                // Header khusus meminta data mentah instan
+                const response = await fetch(apiUrl, {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3.raw'
+                    },
+                    cache: 'no-store' // Paksa browser untuk tidak menyimpan cache lokal
+                });
+                
                 const data = await response.json();
                 
                 let totalCoins = 0;
@@ -114,9 +120,6 @@
                 sortedUsers.forEach(user => {
                     totalCoins += user.isc_balance;
                     
-                    // Format alamat dompet agar tidak terlalu panjang (opsional)
-                    const shortAddress = user.address.substring(0, 6) + '...' + user.address.substring(user.address.length - 4);
-
                     tableHtml += `
                         <tr>
                             <td class="address">${user.address}</td>
@@ -132,7 +135,7 @@
                 document.getElementById('minerList').innerHTML = tableHtml || '<tr><td colspan="4" style="text-align: center;">Belum ada penambang.</td></tr>';
 
             } catch (error) {
-                console.error("Gagal mengambil data:", error);
+                console.error("Gagal mengambil data API:", error);
                 document.getElementById('totalMinted').innerText = 'Error';
                 document.getElementById('minerList').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #ff4444;">Gagal terhubung ke jaringan database.</td></tr>';
             }
