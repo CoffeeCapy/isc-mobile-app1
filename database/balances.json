@@ -9,6 +9,12 @@
       "mb_shared": 140.0,
       "isc_balance": 140.0,
       "last_sync": "2026-02-23"
+    },
+    {
+      "address": "0xDompetAhmad123",
+      "mb_shared": 10.0,
+      "isc_balance": 10.0,
+      "last_sync": "2026-02-22"
     }
   ]
 }
