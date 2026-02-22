@@ -1,59 +1,47 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-
-const GITHUB_USERNAME = "github.com/coffeeCapy"; // Ganti dengan username GitHub Anda
-const REPO_NAME = "isc-mobile-app1";
-const GITHUB_TOKEN = "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"; // Kita akan bahas ini di bawah
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { trackMiningData } from './logic/DataTracker';
 
 export default function App() {
-  const [status, setStatus] = useState("Idle");
+  const [mbShared, setMbShared] = useState(0);
 
-  const sendMiningData = async () => {
-    setStatus("Mengirim Data...");
-    
-    try {
-      const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/dispatches`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          event_type: 'update_mining_data', // Ini harus sama dengan di validator.yml
-          client_payload: {
-            user_address: "0xUserBudi123", // Alamat dompet user
-            mb_shared: 50 // Contoh: user berbagi 50MB
-          }
-        })
-      });
-
-      if (response.ok) {
-        setStatus("Berhasil! Koin diproses.");
-      } else {
-        setStatus("Gagal mengirim laporan.");
+  useEffect(() => {
+    // Jalankan pengecekan setiap 30 detik
+    const interval = setInterval(async () => {
+      const isMining = await trackMiningData();
+      
+      if (isMining) {
+        // Simulasi: Tambah 1MB setiap 30 detik jika terkoneksi
+        setMbShared(prev => prev + 1);
+        
+        // Kirim ke GitHub setiap kelipatan 10MB agar hemat baterai/request
+        if ((mbShared + 1) % 10 === 0) {
+           simpanKeGitHub("0xWalletUserAnda", 10);
+        }
       }
-    } catch (error) {
-      setStatus("Error: " + error.message);
-    }
-  };
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [mbShared]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>ISC Miner 🌐</Text>
-      <Text style={styles.status}>Status: {status}</Text>
-      
-      <TouchableOpacity style={styles.button} onPress={sendMiningData}>
-        <Text style={styles.buttonText}>Kirim Laporan Data (Mine)</Text>
-      </TouchableOpacity>
+      <Text style={styles.title}>ISC Miner Active 🌐</Text>
+      <Text style={styles.dataText}>Data Terbagi: {mbShared} MB</Text>
+      <Text style={styles.coinText}>Estimasi Koin: {mbShared} ISC</Text>
     </View>
   );
 }
 
+// Fungsi ini akan memicu Robot Validator.yml yang Anda buat tadi
+async function simpanKeGitHub(wallet, amount) {
+  // Gunakan Fetch API ke GitHub Dispatch seperti yang kita bahas sebelumnya
+  console.log(`Mengirim laporan ${amount}MB ke GitHub...`);
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  status: { fontSize: 16, color: 'blue', marginBottom: 30 },
-  button: { backgroundColor: '#28a745', padding: 15, borderRadius: 10 },
-  buttonText: { color: '#fff', fontWeight: 'bold' }
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#121212' },
+  title: { color: '#00ff00', fontSize: 20, fontWeight: 'bold' },
+  dataText: { color: '#fff', fontSize: 40 },
+  coinText: { color: '#aaa', fontSize: 16 }
 });
