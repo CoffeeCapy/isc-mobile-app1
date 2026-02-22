@@ -1,0 +1,14 @@
+{
+  "network_stats": {
+    "total_data_shared_gb": 0,
+    "total_coins_minted": 0
+  },
+  "users": [
+    {
+      "address": "0xContohDompetUser1",
+      "mb_shared": 0,
+      "isc_balance": 0,
+      "last_sync": "2026-02-23"
+    }
+  ]
+}
