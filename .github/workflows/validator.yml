@@ -25,3 +25,4 @@ jobs:
           git add database/balances.json
           git commit -m "Update balance for ${{ github.event.client_payload.user_address }}"
           git push
+ 
