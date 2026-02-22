@@ -2,6 +2,7 @@ name: ISC Data Validator
 on:
   repository_dispatch:
     types: [update_mining_data]
+    workflow_dispatch:
 
 jobs:
   update-ledger:
