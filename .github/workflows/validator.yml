@@ -1,0 +1,26 @@
+name: ISC Data Validator
+on:
+  repository_dispatch:
+    types: [update_mining_data]
+
+jobs:
+  update-ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Process Mining Data
+        run: |
+          # Di sini nanti kita masukkan logika matematika koin:
+          # Rumus: 1 MB = 1 ISC
+          echo "Memproses data dari user: ${{ github.event.client_payload.user_address }}"
+          # (Logika update JSON akan kita buat di langkah berikutnya)
+          
+      - name: Commit Updated Balances
+        run: |
+          git config --global user.name "ISC-Bot"
+          git config --global user.email "bot@isc.network"
+          git add database/balances.json
+          git commit -m "Update balance for ${{ github.event.client_payload.user_address }}"
+          git push
